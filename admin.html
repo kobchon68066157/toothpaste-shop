@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pick & Pack</title>
+<style>
+body{font-family:system-ui,"Noto Sans Thai",sans-serif;max-width:1000px;margin:auto;padding:20px;color:#1c2a26}
+h1{color:#0b6e55}.btn{background:#12a37f;color:#fff;border:0;padding:10px 20px;border-radius:24px;cursor:pointer;font-size:15px}
+table{border-collapse:collapse;width:100%;margin:10px 0 28px}th,td{border:1px solid #d6e3de;padding:8px;text-align:left}th{background:#e8f6f1}
+.pick{display:flex;gap:16px;flex-wrap:wrap}.pick div{border:1px solid #d6e3de;border-radius:12px;padding:12px;text-align:center;min-width:170px}
+.pick img{width:110px}.pick b{font-size:26px;color:#0b6e55;display:block}
+.order{border:2px dashed #9cc9bb;border-radius:12px;padding:14px;margin-bottom:16px;page-break-inside:avoid}
+@media print{.noprint{display:none}}
+</style></head><body>
+<h1>📦 รายการหยิบสินค้า & แพ็กส่งลูกค้า</h1>
+<button class="btn noprint" onclick="load()">🔄 ดึงข้อมูลล่าสุดจาก Google Sheet</button>
+<button class="btn noprint" onclick="print()">🖨️ พิมพ์ใบแพ็ก</button>
+<div id="status"></div>
+
+<h2>1) ยอดรวมที่ต้องหยิบ (Pick List)</h2><div class="pick" id="pick"></div>
+<h2>2) ใบแพ็กแยกตามออเดอร์ (Pack Slip)</h2><div id="orders"></div>
+
+<script src="config.js"></script>
+<script>
+const imgOf = sku => (PRODUCTS.find(p=>p.sku===sku)||{}).img || "";
+async function load(){
+  const st=document.getElementById("status"); st.textContent="กำลังโหลด...";
+  try{
+    const res = await fetch(APPS_SCRIPT_URL); const rows = await res.json();
+    const total={}, orders={};
+    rows.forEach(r=>{
+      total[r.sku]=total[r.sku]||{name:r.product,qty:0}; total[r.sku].qty+=+r.qty;
+      (orders[r.id]=orders[r.id]||{id:r.id,time:r.time,name:r.name,phone:r.phone,addr:r.addr,items:[]}).items.push(r);
+    });
+    document.getElementById("pick").innerHTML = Object.entries(total).map(([sku,t])=>
+      `<div><img src="${imgOf(sku)}"><br>${t.name}<br><small>${sku}</small><b>× ${t.qty}</b></div>`).join("") || "ยังไม่มีออเดอร์";
+    document.getElementById("orders").innerHTML = Object.values(orders).reverse().map(o=>`
+      <div class="order"><b>${o.id}</b> · ${o.time}<br>ผู้รับ: <b>${o.name}</b> โทร ${o.phone}<br>ที่อยู่: ${o.addr}
+      <table><tr><th>SKU</th><th>สินค้า</th><th>จำนวนที่ต้องแพ็ก</th><th>✔</th></tr>
+      ${o.items.map(i=>`<tr><td>${i.sku}</td><td>${i.product}</td><td>${i.qty}</td><td>☐</td></tr>`).join("")}</table></div>`).join("");
+    st.textContent="อัปเดต "+new Date().toLocaleTimeString("th-TH")+" · "+Object.keys(orders).length+" ออเดอร์";
+  }catch(e){ st.textContent="❌ โหลดไม่สำเร็จ ตรวจสอบ APPS_SCRIPT_URL ใน config.js"; }
+}
+load();
+</script></body></html>

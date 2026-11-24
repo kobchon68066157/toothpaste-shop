@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmileBright | ยาสีฟันเพื่อรอยยิ้ม</title>
+<style>
+:root{--g:#12a37f;--d:#0b6e55;--bg:#f4fbf8;--t:#1c2a26}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Sans Thai",sans-serif;color:var(--t);background:#fff}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 5%;position:sticky;top:0;background:#fff;box-shadow:0 1px 6px #0001;z-index:5}
+header b{color:var(--g);font-size:22px}header a{color:var(--t);text-decoration:none;margin-left:18px}
+.hero{background:linear-gradient(135deg,#dff6ee,#f4fbf8);text-align:center;padding:70px 5%}
+.hero h1{font-size:clamp(30px,5vw,52px);margin:0 0 12px}.hero p{font-size:18px;margin:0 0 24px}
+.btn{background:var(--g);color:#fff;border:0;padding:12px 26px;border-radius:30px;font-size:16px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn:hover{background:var(--d)}
+section{padding:50px 5%;max-width:1100px;margin:auto}h2{text-align:center;margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}
+.card{border:1px solid #e3ece8;border-radius:16px;overflow:hidden;background:#fff}
+.card img{width:100%;display:block}.card div{padding:16px}.card h3{margin:0 0 6px}
+.price{color:var(--d);font-weight:700;font-size:20px;margin:8px 0}
+.perks{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;text-align:center}
+.perks div{background:var(--bg);padding:22px;border-radius:14px}
+.order{background:var(--bg);border-radius:16px;padding:24px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #dde8e3}
+.row input{width:70px;padding:6px}
+label{display:block;margin:12px 0 4px;font-weight:600}
+input[type=text],input[type=tel],textarea{width:100%;padding:10px;border:1px solid #c9d8d2;border-radius:8px;font:inherit}
+#msg{margin-top:14px;font-weight:600}
+footer{text-align:center;padding:24px;background:#0b6e55;color:#fff}
+</style>
+</head>
+<body>
+<header><b>🦷 SmileBright</b><nav><a href="#products">สินค้า</a><a href="#order">สั่งซื้อ</a></nav></header>
+
+<div class="hero">
+  <h1>ยิ้มมั่นใจ ทุกวัน</h1>
+  <p>ยาสีฟันคุณภาพ 2 สูตร ดูแลฟันและลมหายใจให้สดชื่น</p>
+  <a class="btn" href="#order">สั่งซื้อเลย</a>
+</div>
+
+<section id="products"><h2>สินค้าของเรา</h2><div class="grid" id="productGrid"></div></section>
+
+<section><h2>ทำไมต้อง SmileBright</h2>
+  <div class="perks"><div>✅<br><b>ปลอดภัย</b><br>ผ่านการทดสอบคุณภาพ</div><div>🚚<br><b>ส่งไว</b><br>แพ็กและจัดส่งภายใน 1 วัน</div><div>💚<br><b>คุ้มค่า</b><br>ราคาเริ่มต้น 99 บาท</div></div>
+</section>
+
+<section id="order"><h2>สั่งซื้อสินค้า</h2>
+ <div class="order">
+  <div id="cartRows"></div>
+  <p style="text-align:right;font-size:20px">รวมทั้งหมด: <b id="total">0</b> บาท</p>
+  <label>ชื่อ-นามสกุล</label><input type="text" id="name">
+  <label>เบอร์โทร</label><input type="tel" id="phone">
+  <label>ที่อยู่จัดส่ง</label><textarea id="addr" rows="3"></textarea>
+  <br><button class="btn" id="submitBtn">ยืนยันคำสั่งซื้อ</button>
+  <div id="msg"></div>
+ </div>
+</section>
+
+<footer>© 2026 SmileBright · <a href="admin.html" style="color:#bfeede">หน้าแพ็กสินค้า (Admin)</a></footer>
+
+<script src="config.js"></script>
+<script>
+const qty = {}; PRODUCTS.forEach(p => qty[p.sku] = 0);
+const $ = id => document.getElementById(id);
+
+$("productGrid").innerHTML = PRODUCTS.map(p => `
+  <div class="card"><img src="${p.img}" alt="${p.name}">
+  <div><h3>${p.name}</h3><p>${p.desc}</p><div class="price">฿${p.price}</div>
+  <button class="btn" onclick="add('${p.sku}')">หยิบใส่ตะกร้า</button></div></div>`).join("");
+
+function add(sku){ qty[sku]++; render(); location.hash="order"; }
+function render(){
+  $("cartRows").innerHTML = PRODUCTS.map(p => `
+    <div class="row"><span>${p.name} (฿${p.price})</span>
+    <span>จำนวน <input type="number" min="0" value="${qty[p.sku]}" onchange="qty['${p.sku}']=Math.max(0,+this.value||0);render()"></span></div>`).join("");
+  $("total").textContent = PRODUCTS.reduce((s,p)=>s+p.price*qty[p.sku],0);
+}
+render();
+
+$("submitBtn").onclick = async () => {
+  const items = PRODUCTS.filter(p=>qty[p.sku]>0).map(p=>({sku:p.sku,name:p.name,qty:qty[p.sku],price:p.price}));
+  const name=$("name").value.trim(), phone=$("phone").value.trim(), addr=$("addr").value.trim();
+  const msg=$("msg");
+  if(!items.length) return msg.textContent="⚠️ กรุณาเลือกสินค้าอย่างน้อย 1 ชิ้น";
+  if(!name||!phone||!addr) return msg.textContent="⚠️ กรุณากรอกข้อมูลให้ครบ";
+  msg.textContent="กำลังส่งคำสั่งซื้อ...";
+  try{
+    await fetch(APPS_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({name,phone,addr,items})});
+    msg.textContent="✅ สั่งซื้อสำเร็จ! ขอบคุณที่อุดหนุนครับ/ค่ะ";
+    PRODUCTS.forEach(p=>qty[p.sku]=0); render();
+    $("name").value=$("phone").value=$("addr").value="";
+  }catch(e){ msg.textContent="❌ ส่งไม่สำเร็จ ลองใหม่อีกครั้ง"; }
+};
+</script>
+</body></html>
